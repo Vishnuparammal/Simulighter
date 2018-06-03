@@ -1,0 +1,168 @@
+<!DOCTYPE html><!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="initial-scale=1.0" />
+	<title>Light Simulator</title>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.6.1/p5.js"></script>
+
+	<style type="text/css">
+		html, body {
+			padding: 0px;
+			margin: 0px;
+		}
+		ul.toolbar li{
+			float: left;
+			padding-left: 1em;
+			padding-bottom: 5px;
+		}
+
+		div.edit-toolbar {
+			float: right;
+			margin: 0.5em;
+		}
+
+		ul.toolbar li button {
+			background-color: #262626;
+			border-width: 0px;
+			color: white;
+			padding: 0.8em 1.2em 0.8em 1.2em;
+		}
+		ul.toolbar li button:hover {
+			background-color: #000000;
+		}
+	</style>
+</head>
+<body>
+
+	<div style="padding: 0;">
+		<ul style="list-style-type: none;" class="toolbar">
+			<li><button id="ray-btn">Ray</button></li>
+			<li><button id="lens-btn">Lens</button></li>
+			<li><button id="mirror-btn">Mirror</button></li>
+		</ul>
+	</div>
+	<div class="edit-toolbar">
+		<button id="undo">Undo</button>
+		<button id="redo">Redo</button>
+	</div>
+	<div id="sketch-holder">
+		<!-- Our sketch will go here! -->
+	</div>
+	<script type="text/javascript">
+
+		let Point = function(x,y){
+			this.x = x;
+			this.y = y;
+
+			if(typeof this.draw !== 'function'){
+				Point.prototype.draw = function(){
+					point(this.x, this.y);
+				};
+			}
+
+		}
+
+		let Line  = function(p1, p2){
+			this.start = p1;
+			this.next  = p2;
+
+			if(typeof this.draw !== 'function'){
+				Line.prototype.draw = function(){
+					line(this.start.x, this.start.y, this.next.x, this.next.y);
+				};
+			}
+		};
+
+		let bodyList     = [];
+		let state        = {};
+		let tempRedoList = [];
+
+		document.querySelectorAll("ul.toolbar li button").forEach(function(button){
+			button.onclick = function(){
+				if(state.newBody !== undefined)
+					if(state.step > 0)
+						bodyList.pop();
+				state = {newBody:button.id, step:0};
+			}
+		});
+
+		document.getElementById("undo").onclick = function(){
+			if(state.newBody !== undefined){
+				//to-dos UNDO FOR PENDING BODIES
+			}
+			else{
+				if(bodyList.length > 0)
+					tempRedoList.push(bodyList.pop());
+			}
+		}
+
+		document.getElementById("redo").onclick = function(){
+			if(state.newBody !== undefined){
+				//to-dos UNDO FOR PENDING BODIES
+			}
+			else{
+				if(tempRedoList.length > 0)
+					bodyList.push(tempRedoList.pop());
+			}
+		}
+
+		function setup(){
+			let canvas = createCanvas(windowWidth, windowHeight);
+			canvas.parent('sketch-holder');
+		}
+
+		function mousePressed(){
+			if(state.newBody === undefined)
+				return;
+
+			switch(state.newBody){
+				case 'ray-btn':
+					switch(state.step){
+						case 0:
+							bodyList.push(new Line(new Point(mouseX, mouseY), new Point(mouseX, mouseY)));
+							state.step = 1;
+							break;
+						case 1:
+							let newLine  = bodyList.pop();
+							newLine.next = new Point(mouseX,mouseY);
+							bodyList.push(newLine);
+							state = {};
+							break;
+					}
+				break;
+			}
+		}
+
+		function mouseMoved(){
+			if(state.newBody === undefined)
+				return;
+
+			switch(state.newBody){
+				case 'ray-btn':
+					switch(state.step){
+						case 1:
+							let newLine  = bodyList.pop();
+							newLine.next = new Point(mouseX,mouseY);
+							bodyList.push(newLine);
+							break;
+					}
+			}
+		}
+
+		function draw(){
+
+			background(38);
+			stroke(255);
+			strokeWeight(4);
+			fill(100);
+
+			bodyList.forEach(function(body){
+				body.draw();
+			});
+		}
+		
+	</script>
+</body>
+</html>
