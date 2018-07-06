@@ -100,8 +100,8 @@
 						}
 						
 						var lineAngle = abs((lineSlope - normalSlope)/(1+lineSlope*normalSlope));
-						var nx = cos(atan(lineSlope) - 2*lineAngle) + lx;
-						var ny = sin(atan(lineSlope) - 2*lineAngle) + ly;
+						var nx = cos(atan2(lineSlope,1) - 2*lineAngle) + lx;
+						var ny = sin(atan2(lineSlope,1) - 2*lineAngle) + ly;
 						console.log(nx);
 						let new1Line1 = new Line(this.next, new Point(nx, ny));
 							return new1Line1;
