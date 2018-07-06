@@ -82,31 +82,61 @@
 			}
 
 			if(typeof this.extend !== 'function'){
-				Line.prototype.extend = function(x,y){
-					this.next = new Point(x,y);
-					let extend;
-					if(this.next.y==this.start.y)
-						extend=1;
-					else
-						extend=2;
-					
-					switch(extend){
-						case 1:
-							if(this.next.x>this.start.x)
-								extend=windowWidth;
-							else if(this.next.x<this.start.x)
-								extend=0;
-							this.next.x=extend;
+				Line.prototype.extend = function(x,y,check,body=undefined){
+					if (check==1)
+					{
+						this.next = new Point(x,y);
+						
+						var lineSlope = this.getSlope();
+						var ly = this.next.y;
+						var lx = this.next.x;
+						var normalSlope;
+						
+						switch(body.type){
+						case 'Mirror':
+							normalSlope = (ly-body.center.y)/(lx-body.center.x);
 							break;
-						case 2:
-							if(this.next.y>this.start.y)
-								extend=windowHeight;
-							else if (this.next.y<this.start.y)
-								extend=0;
-							this.next.x=(extend-this.start.y)/(this.next.y-this.start.y)*(this.next.x-this.start.x)+this.start.x;
-							this.next.y=extend;
-							break;
+						default: return undefined;
+						}
+						
+						var lineAngle = abs((lineSlope - normalSlope)/(1+lineSlope*normalSlope));
+						var nx = cos(atan(lineSlope) - 2*lineAngle) + lx;
+						var ny = sin(atan(lineSlope) - 2*lineAngle) + ly;
+						console.log(nx);
+						let new1Line1 = new Line(this.next, new Point(nx, ny));
+							return new1Line1;
+							
+							
+						
 					}
+					else
+						{
+						
+						this.next= new Point(x,y);
+						if(this.next.y==this.start.y)
+							extend=1;
+						else
+							extend=2;
+					
+						switch(extend){
+							case 1:
+								if(this.next.x>this.start.x)
+									extend=windowWidth;
+								else if(this.next.x<this.start.x)
+									extend=0;
+								this.next.x=extend;
+								break;
+							case 2:
+								if(this.next.y>this.start.y)
+									extend=windowHeight;
+								else if (this.next.y<this.start.y)
+									extend=0;
+								this.next.x=(extend-this.start.y)/(this.next.y-this.start.y)*(this.next.x-this.start.x)+this.start.x;
+								this.next.y=extend;
+								break;
+						}
+				return undefined;
+				}
 				}
 			}
 			
@@ -125,48 +155,77 @@
 							if (distance>=body.roc)
 								break;
 							
-							
 							let eqConst = (this.start.y - body.center.y + lineSlope*(body.center.x - this.start.x))/body.roc;
 							let alpha   = acos(-lineSlope/(sqrt(1 + lineSlope ** 2)));
 							let beta = acos(eqConst/(sqrt(1 + lineSlope ** 2)));
-							let theta1 = alpha + beta;
-							let theta2 = alpha - beta; 
-							console.log('theta1 '+theta1*180/PI);
-							console.log('theta2 '+theta2*180/PI);
-							console.log('min '+(-body.angle+body.tempangle)*180/PI);
-							console.log('max '+(body.angle+body.tempangle)*180/PI);
+							let theta1 = alpha - beta;
+							let theta2 = alpha + beta;
+							//console.log('theta1 '+ theta1*180/PI);
+							//console.log('theta2 '+ theta2*180/PI);
 							
-							if(theta1>(-body.angle+body.tempangle)&&theta1<(body.angle+body.tempangle))
-							{
-								bodyList.push(new Point(
-							 	(body.roc * cos(theta1) + body.center.x),
-							 	(body.roc * sin(theta1) + body.center.y)
-							 	));
-							}
+							let mini = body.angle+body.tempangle;
+							let maxi = -body.angle+body.tempangle;
 							
-							if(theta2>(-body.angle+body.tempangle)&&theta2<(body.angle+body.tempangle))
-							{
-								bodyList.push(new Point(
-							 	(body.roc * cos(theta2) + body.center.x),
-							 	(body.roc * sin(theta2) + body.center.y)
-							 	));
-							}
 							
-							// console.log(theta);
-							// console.log(body.tempangle - body.angle);
-							// console.log(body.tempangle + body.angle);
-
-							/* 
-							 bodyList.push(new Point(
-							 	(body.roc * cos(theta1) + body.center.x),
-							 	(body.roc * sin(theta1) + body.center.y)
-							 	));
-							 bodyList.push(new Point(
-							 	(body.roc * cos(theta2) + body.center.x),
-							 	(body.roc * sin(theta2) + body.center.y)
-							 	));
+							
+							
+							/*while (mini<=-PI)
+								{console.log('enter mini less');
+								mini+=2*PI;}
+							while (mini>PI)
+								{console.log('enter mini more');
+								mini-=2*PI;}
+							while (maxi<=-PI)
+								maxi+=2*PI;
+							while (maxi>PI)
+								maxi-=2*PI;
+							console.log('mini '+mini*180/PI);
+							console.log('maxi '+maxi*180/PI);
+							*//*	
+							if (theta1<=-PI)
+								theta1+=2*PI;
+							if (theta1>PI)
+								theta1-=2*PI;
+							if (theta2<=-PI)
+								theta2+=2*PI;
+							if (theta2>PI)
+								theta2-=2*PI;
 							*/
+							
+							
+							/*if(mini>maxi)
+							{
+								t=mini;
+								mini=maxi;
+								maxi=t;
+							}*/
+						
+							if(theta1<maxi&&theta1>mini)
+							{
+								p1 = new Point(
+							 	(body.roc * cos(theta1) + body.center.x),
+							 	(body.roc * sin(theta1) + body.center.y)
+							 	);
+							 	//console.log('p1');
+							 	p1.draw();
+							 	return this.extend(p1.x,p1.y,1,body);
+							 	
+							 	
+							}
+							
+							if(theta2<maxi&&theta2>mini)
+							{
+								p2 = new Point(
+							 	(body.roc * cos(theta2) + body.center.x),
+							 	(body.roc * sin(theta2) + body.center.y)
+							 	);
+							 	//console.log('p2');
+							 	p2.draw();
+							 	return this.extend(p2.x,p2.y,1,body);
+							 	
+							}
 							break;
+						
 						case "Lens":
 
 							break;
@@ -174,6 +233,66 @@
 				}
 			}
 			
+		};
+		
+		let Ray = function(p1, p2){
+			if(typeof Ray.prototype.type === "undefined")
+				Ray.prototype.type = "Ray";
+
+			this.start = p1; 	//START POINT OF RAY
+			this.next  = p2;	//NEXT POINT OF RAY, NOT NECESSARILY ON ANY LINE
+
+			this.lineList   = [new Line(this.start,this.next)];//todo EMPTY THIS AND FILL IN lines IN IT EVERY TIME
+
+			if(typeof this.draw !== 'function')
+				Ray.prototype.draw = function(){
+					this.lineList.forEach(function(Line){
+						Line.draw();
+					});
+					this.lineList = []; //todo EMPTIES THE LIST OF LINES IN THE RAY, SO NEXT ROUND PF CALCULATIONS CAN TAKE PLACE
+				}
+
+			if(typeof this.emptyList !== 'function'){
+				Ray.prototype.emptyList = function(){
+					this.lineList = [];
+				}
+			}
+			
+			//todo RAY INTERSECTION CHECKING, ideally should work but please go through the logic as this 
+			//is the most crucial part
+			if(typeof this.checkIntersect !== 'function'){
+				Ray.prototype.checkIntersect = function(bodiesList){
+					//todo ASSUMPTION: this.lineList is empty at this point, and we are calculating possible lines of the RAY
+					//Added first line into this.lineList
+					this.lineList   = [new Line(this.start,this.next)];
+
+					for(i=0; i<this.lineList.length; i++){
+						//Gets the latest line
+						let currLine = this.lineList[i];
+						
+						let reflectedLine = undefined;
+						let body;
+						for(j=0; j<bodiesList.length; j++){
+							reflectedLine = currLine.checkIntersect(bodiesList[j]);
+							if(reflectedLine !== undefined){
+								body = bodiesList[j];
+								break;}//Found our intersection
+						}
+						if(reflectedLine === undefined){
+							currLine.extend(currLine.next.x,currLine.next.y,0);
+							continue;}
+						else{
+							//WE found an intersection point, so we must add a new line to the list
+							//and shorten the current line till the intersection point
+							//this.lineList[i].extend(reflectedLine.start.x, reflectedLine.start.y, 1, body);
+							this.lineList.push(reflectedLine);
+						}
+					}
+					this.lineList.forEach(function(line){
+						line.draw();
+					});
+				}
+			}
 		};
 
 		let Mirror = function(p1,p2,p3,roc){
@@ -184,17 +303,16 @@
 			this.start=p2;
 			this.end = p3;
 			this.tempangle=0;
+			
 			this.center=new Point(this.pole.x-roc,this.pole.y);
-			this.angle=atan(-(this.start.y-this.center.y)/(this.start.x-this.center.x));
+			this.angle=atan2((this.start.y-this.center.y),(this.start.x-this.center.x));
       
 			if(typeof this.setStart !=='function'){
 		      		Mirror.prototype.setStart = function(x, y){
 					this.start = new Point(x,y);
-					this.angle=atan(-(this.start.y-this.center.y)/(this.start.x-this.center.x));
-					if (this.angle<0)
-					{
-						this.angle+=PI;
-					}
+					this.angle=atan2((this.start.y-this.center.y),(this.start.x-this.center.x));
+					//console.log('angle '+this.angle*180/PI);
+					
         			}
       			}
       
@@ -202,9 +320,11 @@
 		      		Mirror.prototype.setEnd = function(x, y){
 					this.end = new Point(x,y);
 					this.tempangle = atan2((this.end.y-this.pole.y),(this.end.x-this.pole.x));
+					//console.log('tempangle for center '+this.tempangle*180/PI);
 					this.center.x=this.roc*cos(this.tempangle) +this.pole.x;			
 					this.center.y=(this.roc*sin(this.tempangle) + this.pole.y);
-					this.tempangle += PI;
+					this.tempangle +=PI;
+					
         			}
      			}
 			
@@ -212,7 +332,7 @@
 				Mirror.prototype.draw = function(){
 					push();
 		  			noFill();
-		  			arc(this.center.x,this.center.y,this.roc*2,this.roc*2,-this.angle+this.tempangle,this.angle+this.tempangle);
+		  			arc(this.center.x,this.center.y,this.roc*2,this.roc*2,this.angle+this.tempangle,-this.angle+this.tempangle);
 		  			pop();
 		  			this.pole.draw();
 		  			this.center.draw();
@@ -254,6 +374,7 @@
 					this.center1.y=this.roc*cos(this.angle)*sin(this.tempangle) + this.pole.y;
 					this.center2.x=this.roc*cos(this.angle)*cos(this.tempangle+PI) + this.pole.x;			
 					this.center2.y=this.roc*cos(this.angle)*sin(this.tempangle+PI) + this.pole.y;
+					
 					this.tempangle += PI;
         			}
 			}
@@ -276,7 +397,7 @@
 		let bodyList     = [];
 		let state        = {};
 		let tempRedoList = [];
-		let lineList     = [];
+		let rayList     = [];
 
 
 		document.querySelectorAll("ul.toolbar li button").forEach(function(button){
@@ -314,23 +435,22 @@
 
 		function mousePressed(){
 			if(state.newBody === undefined)
-				return;
+				return
 
 			switch(state.newBody){
 				case 'ray-btn':
 					switch(state.step){
 						case 0:
-							let newLine1 = new Line(new Point(mouseX, mouseY), new Point(mouseX, mouseY));
-							bodyList.push(newLine1);
-							lineList.push(newLine1);
+							let newRay1 = new Ray(new Point(mouseX, mouseY), new Point(mouseX, mouseY));
+							bodyList.push(newRay1);
+							rayList.push(newRay1);
 							state.step = 1;
 							break;
 						case 1:
-							let newLine  = lineList.pop();
+							let newRay  = rayList.pop();
 							bodyList.pop();
-							newLine.extend(mouseX,mouseY);
-							bodyList.push(newLine);
-							lineList.push(newLine);
+							bodyList.push(newRay);
+							rayList.push(newRay);
 							state = {};
 							break;
 					}
@@ -388,11 +508,11 @@
 				case 'ray-btn':
 					switch(state.step){
 						case 1:
-							let newLine  = lineList.pop();
+							let newRay  = rayList.pop();
 							bodyList.pop();
-							newLine.extend(mouseX,mouseY);
-							bodyList.push(newLine);
-							lineList.push(newLine);
+							newRay = new Ray(newRay.start, new Point(mouseX,mouseY));
+							bodyList.push(newRay);
+							rayList.push(newRay);
 							break;
 					}
 				break;
@@ -400,7 +520,6 @@
 					switch(state.step){
 						case 1:
 							let newMirror = bodyList.pop();
-							
 							newMirror.setStart(mouseX,mouseY);
 							bodyList.push(newMirror);
 							break;
@@ -446,14 +565,15 @@
 			new Point(0,0).draw();
 			drawGrid();
 
+			
+
+			rayList.forEach(function(ray){
+				ray.checkIntersect(bodyList);
+				console.log(ray.lineList);
+			});
+			
 			bodyList.forEach(function(body){
 				body.draw();
-			});
-
-			lineList.forEach(function(line){
-				bodyList.forEach(function(opticBody){
-					line.checkIntersect(opticBody);
-				});
 			});
 		}
 		
