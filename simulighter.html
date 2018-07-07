@@ -102,7 +102,7 @@
 						var lineAngle = abs((lineSlope - normalSlope)/(1+lineSlope*normalSlope));
 						var nx = cos(atan2(lineSlope,1) - 2*lineAngle) + lx;
 						var ny = sin(atan2(lineSlope,1) - 2*lineAngle) + ly;
-						console.log(nx);
+						//console.log(nx);
 						let new1Line1 = new Line(this.next, new Point(nx, ny));
 							return new1Line1;
 							
@@ -224,6 +224,7 @@
 							 	return this.extend(p2.x,p2.y,1,body);
 							 	
 							}
+							return undefined;
 							break;
 						
 						case "Lens":
@@ -279,8 +280,10 @@
 								break;}//Found our intersection
 						}
 						if(reflectedLine === undefined){
+							//console.log(currLine.next);
 							currLine.extend(currLine.next.x,currLine.next.y,0);
-							continue;}
+							//continue;
+						}
 						else{
 							//WE found an intersection point, so we must add a new line to the list
 							//and shorten the current line till the intersection point
@@ -569,7 +572,7 @@
 
 			rayList.forEach(function(ray){
 				ray.checkIntersect(bodyList);
-				console.log(ray.lineList);
+				//console.log(ray.lineList);
 			});
 			
 			bodyList.forEach(function(body){
