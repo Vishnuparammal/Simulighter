@@ -88,6 +88,10 @@
 						this.next = new Point(x,y);
 						
 						var lineSlope = this.getSlope();
+						var lineInclination = atan2((this.next.y-this.start.y),(this.next.x-this.start.x));
+						if (lineInclination<0){
+							lineInclination+=2*PI;
+						}
 						var ly = this.next.y;
 						var lx = this.next.x;
 						var normalSlope;
@@ -99,9 +103,18 @@
 						default: return undefined;
 						}
 						
-						var lineAngle = abs((lineSlope - normalSlope)/(1+lineSlope*normalSlope));
-						var nx = cos(atan2(lineSlope,1) - 2*lineAngle) + lx;
-						var ny = sin(atan2(lineSlope,1) - 2*lineAngle) + ly;
+						if (normalSlope == -1/lineSlope)
+							lineAngle = PI/2;
+						else
+							lineAngle = abs((lineSlope - normalSlope)/(1+lineSlope*normalSlope));
+						if (lineSlope>normalSlope){
+							var nx = cos(lineInclination - 2*lineAngle) + lx;
+							var ny = sin(lineInclination - 2*lineAngle) + ly;
+						}
+						else{
+							var nx = cos(lineInclination + 2*lineAngle) + lx;
+							var ny = sin(lineInclination + 2*lineAngle) + ly;
+						}
 						//console.log(nx);
 						let new1Line1 = new Line(this.next, new Point(nx, ny));
 							return new1Line1;
@@ -169,36 +182,21 @@
 							
 							
 							
-							/*while (mini<=-PI)
-								{console.log('enter mini less');
-								mini+=2*PI;}
-							while (mini>PI)
-								{console.log('enter mini more');
-								mini-=2*PI;}
-							while (maxi<=-PI)
+							while (mini<0){
+								mini+=2*PI;
+							}
+							while (mini>=2*PI){
+								mini-=2*PI;
+							}
+							while (maxi<0){
 								maxi+=2*PI;
-							while (maxi>PI)
+							}
+							while (maxi>=2*PI){
 								maxi-=2*PI;
-							console.log('mini '+mini*180/PI);
-							console.log('maxi '+maxi*180/PI);
-							*//*	
-							if (theta1<=-PI)
+							}
+							
+							if(theta1<0)
 								theta1+=2*PI;
-							if (theta1>PI)
-								theta1-=2*PI;
-							if (theta2<=-PI)
-								theta2+=2*PI;
-							if (theta2>PI)
-								theta2-=2*PI;
-							*/
-							
-							
-							/*if(mini>maxi)
-							{
-								t=mini;
-								mini=maxi;
-								maxi=t;
-							}*/
 						
 							if(theta1<maxi&&theta1>mini)
 							{
