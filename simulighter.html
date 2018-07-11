@@ -74,6 +74,7 @@
 
 			this.start = p1;
 			this.next  = p2;
+			this.id = Math.random();
 
 			if(typeof this.getSlope !== 'function'){
 				Line.prototype.getSlope = function(){
@@ -85,6 +86,8 @@
 				Line.prototype.extend = function(x,y,check,body=undefined){
 					if (check==1)
 					{
+						//console.log('should return line');
+						console.log(this.id);
 						this.next = new Point(x,y);
 						
 						var lineSlope = this.getSlope();
@@ -100,13 +103,14 @@
 						case 'Mirror':
 							normalSlope = (ly-body.center.y)/(lx-body.center.x);
 							break;
-						default: return undefined;
+						//default: return undefined;
 						}
 						
 						if (normalSlope == -1/lineSlope)
 							lineAngle = PI/2;
 						else
 							lineAngle = abs((lineSlope - normalSlope)/(1+lineSlope*normalSlope));
+						//console.log(lineAngle*180/PI);
 						if (lineSlope>normalSlope){
 							var nx = cos(lineInclination - 2*lineAngle) + lx;
 							var ny = sin(lineInclination - 2*lineAngle) + ly;
@@ -116,6 +120,7 @@
 							var ny = sin(lineInclination + 2*lineAngle) + ly;
 						}
 						//console.log(nx);
+						
 						let new1Line1 = new Line(this.next, new Point(nx, ny));
 							return new1Line1;
 							
@@ -124,7 +129,7 @@
 					}
 					else
 						{
-						
+						//console.log('should return undefined');
 						this.next= new Point(x,y);
 						if(this.next.y==this.start.y)
 							extend=1;
@@ -148,7 +153,7 @@
 								this.next.y=extend;
 								break;
 						}
-				return undefined;
+				//return undefined;
 				}
 				}
 			}
@@ -195,7 +200,7 @@
 								maxi-=2*PI;
 							}
 							
-							
+							let p1,p2;
 
 							if (mini>maxi)
 							{
@@ -207,7 +212,10 @@
 									 	);
 									 	//console.log('p1');
 									 	p1.draw();
-									 	return this.extend(p1.x,p1.y,1,body);
+									 	if (p1.x == this.start.x && p1.y == this.start.y)
+											return this.extend(p1.x,p1.y,0);
+										else
+											return this.extend(p1.x,p1.y,1,body);
 									 	
 									 	
 									}
@@ -220,7 +228,10 @@
 									 	);
 									 	//console.log('p2');
 									 	p2.draw();
-									 	return this.extend(p2.x,p2.y,1,body);
+									 	if (p2.x == this.start.x && p2.y == this.start.y)
+											return this.extend(p2.x,p2.y,0);
+									 	else
+									 		return this.extend(p2.x,p2.y,1,body);
 									 	
 									}
 							}
@@ -237,7 +248,10 @@
 								 	);
 								 	//console.log('p1');
 								 	p1.draw();
-								 	return this.extend(p1.x,p1.y,1,body);
+								 	if (p1.x == this.start.x && p1.y == this.start.y)
+										return this.extend(p1.x,p1.y,0);
+								 	else
+								 		return this.extend(p1.x,p1.y,1,body);
 								 	
 								 	
 								}
@@ -250,11 +264,21 @@
 								 	);
 								 	//console.log('p2');
 								 	p2.draw();
-								 	return this.extend(p2.x,p2.y,1,body);
+								 	if (p2.x == this.start.x && p2.y == this.start.y)
+										return this.extend(p2.x,p2.y,0);
+								 	else
+								 		return this.extend(p2.x,p2.y,1,body);
 								 	
 								}
 							}
-							return undefined;
+
+							// var firstIntersection = sqrt((p1.x - this.start.x)**2 + (p1.y - this.start.y)**2); 
+							// var secondIntersection = sqrt((p2.x - this.start.x)**2 + (p2.y - this.start.y)**2);
+							// if (firstIntersection<=secondIntersection)
+							// 	return this.extend(p1.x,p1.y,1,body);
+							// else
+							// 	return this.extend(p2.x,p2.y,1,body); 
+							//return undefined;
 							break;
 						
 						case "Lens":
@@ -272,7 +296,6 @@
 
 			this.start = p1; 	//START POINT OF RAY
 			this.next  = p2;	//NEXT POINT OF RAY, NOT NECESSARILY ON ANY LINE
-
 			this.lineList   = [new Line(this.start,this.next)];//todo EMPTY THIS AND FILL IN lines IN IT EVERY TIME
 
 			if(typeof this.draw !== 'function')
@@ -295,6 +318,7 @@
 				Ray.prototype.checkIntersect = function(bodiesList){
 					//todo ASSUMPTION: this.lineList is empty at this point, and we are calculating possible lines of the RAY
 					//Added first line into this.lineList
+					
 					this.lineList   = [new Line(this.start,this.next)];
 
 					for(i=0; i<this.lineList.length; i++){
@@ -309,18 +333,22 @@
 								body = bodiesList[j];
 								break;}//Found our intersection
 						}
+						//console.log(reflectedLine);
 						if(reflectedLine === undefined){
 							//console.log(currLine.next);
+							//console.log('in curr extend');
 							currLine.extend(currLine.next.x,currLine.next.y,0);
 							//continue;
 						}
 						else{
+							//console.log('in line push');
 							//WE found an intersection point, so we must add a new line to the list
 							//and shorten the current line till the intersection point
 							//this.lineList[i].extend(reflectedLine.start.x, reflectedLine.start.y, 1, body);
 							this.lineList.push(reflectedLine);
 						}
 					}
+					
 					this.lineList.forEach(function(line){
 						line.draw();
 					});
