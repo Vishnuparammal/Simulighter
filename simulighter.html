@@ -74,7 +74,6 @@
 
 			this.start = p1;
 			this.next  = p2;
-			this.id = Math.random();
 
 			if(typeof this.getSlope !== 'function'){
 				Line.prototype.getSlope = function(){
@@ -87,7 +86,6 @@
 					if (check==1)
 					{
 						//console.log('should return line');
-						console.log(this.id);
 						this.next = new Point(x,y);
 						
 						var lineSlope = this.getSlope();
@@ -101,7 +99,11 @@
 						
 						switch(body.type){
 						case 'Mirror':
-							normalSlope = (ly-body.center.y)/(lx-body.center.x);
+							var normalSlope = (ly-body.center.y)/(lx-body.center.x);
+							var normalInclination = atan2((ly-body.center.y),(lx-body.center.x));
+							if (normalInclination<0){
+								normalInclination+=2*PI;
+							}
 							break;
 						//default: return undefined;
 						}
@@ -111,7 +113,7 @@
 						else
 							lineAngle = abs((lineSlope - normalSlope)/(1+lineSlope*normalSlope));
 						//console.log(lineAngle*180/PI);
-						if (lineSlope>normalSlope){
+						if (lineInclination>normalInclination){
 							var nx = cos(lineInclination - 2*lineAngle) + lx;
 							var ny = sin(lineInclination - 2*lineAngle) + ly;
 						}
@@ -119,7 +121,6 @@
 							var nx = cos(lineInclination + 2*lineAngle) + lx;
 							var ny = sin(lineInclination + 2*lineAngle) + ly;
 						}
-						//console.log(nx);
 						
 						let new1Line1 = new Line(this.next, new Point(nx, ny));
 							return new1Line1;
@@ -131,6 +132,7 @@
 						{
 						//console.log('should return undefined');
 						this.next= new Point(x,y);
+						console.log(this.next.x+' '+this.next.y);
 						if(this.next.y==this.start.y)
 							extend=1;
 						else
@@ -153,6 +155,7 @@
 								this.next.y=extend;
 								break;
 						}
+						
 				//return undefined;
 				}
 				}
