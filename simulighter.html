@@ -43,6 +43,7 @@
 		</ul>
 	</div>
 	<div class="edit-toolbar">
+		<button id="grid">Grid</button>
 		<button id="undo">Undo</button>
 		<button id="redo">Redo</button>
 	</div>
@@ -472,6 +473,12 @@
 			}
 		});
 
+		grid = true;
+		document.getElementById("grid").onclick = function(){
+			grid^= true;
+		}
+
+
 		document.getElementById("undo").onclick = function(){
 			if(state.newBody !== undefined){
 				//to-dos UNDO FOR PENDING BODIES
@@ -627,7 +634,8 @@
 			strokeWeight(4);
 			fill(100);
 			new Point(0,0).draw();
-			drawGrid();
+			if(grid)
+				drawGrid();
 
 			
 
