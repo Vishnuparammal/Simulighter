@@ -1,4 +1,4 @@
-#SIMULIGHTER
+# SIMULIGHTER
 
 * Abstract:
 	The project aims at creating a software to simulate the behaviour of a ray of light in an optical system.
