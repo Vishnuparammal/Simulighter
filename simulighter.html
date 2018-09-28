@@ -82,26 +82,20 @@
 				}
 			}
 
-			if(typeof this.extend !== 'function'){
-				Line.prototype.extend = function(x,y,check,body=undefined){
-					if (check==1)
-					{
-						//console.log('should return line');
-						this.next = new Point(x,y);
+			if(typeof this.reflect !== 'function'){
+				Line.prototype.reflect = function(x,y,body){
+					//console.log('should return line');
+						this.next.x = x;			// stop line at mirror
+						this.next.y = y;
 						
-						var lineSlope = this.getSlope();
-						var lineInclination = atan2((this.next.y-this.start.y),(this.next.x-this.start.x));
+						var lineInclination = atan2((this.start.y-this.next.y),(this.start.x-this.next.x));
 						if (lineInclination<0){
 							lineInclination+=2*PI;
 						}
-						var ly = this.next.y;
-						var lx = this.next.x;
-						var normalSlope;
 						
 						switch(body.type){
 						case 'Mirror':
-							var normalSlope = (ly-body.center.y)/(lx-body.center.x);
-							var normalInclination = atan2((ly-body.center.y),(lx-body.center.x));
+							var normalInclination = atan2((body.center.y-this.next.y),(body.center.x-this.next.x));
 							if (normalInclination<0){
 								normalInclination+=2*PI;
 							}
@@ -109,19 +103,10 @@
 						//default: return undefined;
 						}
 						
-						if (normalSlope == -1/lineSlope)
-							lineAngle = PI/2;
-						else
-							lineAngle = abs((lineSlope - normalSlope)/(1+lineSlope*normalSlope));
+						lineAngle = normalInclination - lineInclination;
 						//console.log(lineAngle*180/PI);
-						if (lineInclination>normalInclination){
-							var nx = cos(lineInclination - 2*lineAngle) + lx;
-							var ny = sin(lineInclination - 2*lineAngle) + ly;
-						}
-						else{
-							var nx = cos(lineInclination + 2*lineAngle) + lx;
-							var ny = sin(lineInclination + 2*lineAngle) + ly;
-						}
+						var nx = (this.start.x-this.next.x)*cos(2*lineAngle) - (this.start.y-this.next.y)*sin(2*lineAngle) + this.next.x;
+						var ny = (this.start.x-this.next.x)*sin(2*lineAngle) + (this.start.x-this.next.x)*cos(2*lineAngle) + this.next.y;
 						
 						let new1Line1 = new Line(this.next, new Point(nx, ny));
 							return new1Line1;
@@ -129,11 +114,12 @@
 							
 						
 					}
-					else
-						{
+				}
+
+			if(typeof this.extend !== 'function'){
+				Line.prototype.extend = function(x,y){				
 						//console.log('should return undefined');
 						this.next= new Point(x,y);
-						console.log(this.next.x+' '+this.next.y);
 						if(this.next.y==this.start.y)
 							extend=1;
 						else
@@ -160,7 +146,7 @@
 				//return undefined;
 				}
 				}
-			}
+			
 			
 			if(typeof this.draw !== 'function'){
 				Line.prototype.draw = function(){
@@ -208,6 +194,7 @@
 
 							if (mini>maxi)
 							{
+								
 								if((theta1>mini&&theta1<2*PI)||(theta1>0&&theta1<maxi))
 									{
 										p1 = new Point(
@@ -216,10 +203,9 @@
 									 	);
 									 	//console.log('p1');
 									 	p1.draw();
-									 	if (p1.x == this.start.x && p1.y == this.start.y)
-											return this.extend(p1.x,p1.y,0);
-										else
-											return this.extend(p1.x,p1.y,1,body);
+									 	if (abs(p1.x - this.start.x)>1 || abs(p1.y == this.start.y)>1){	//buffer check if start and int is same
+											return this.reflect(p1.x,p1.y,body);
+										}
 									 	
 									 	
 									}
@@ -232,10 +218,9 @@
 									 	);
 									 	//console.log('p2');
 									 	p2.draw();
-									 	if (p2.x == this.start.x && p2.y == this.start.y)
-											return this.extend(p2.x,p2.y,0);
-									 	else
-									 		return this.extend(p2.x,p2.y,1,body);
+									 	if (abs(p2.x - this.start.x)>1 || abs(p2.y - this.start.y)>1){
+									 		return this.reflect(p2.x,p2.y,body);
+									 	}
 									 	
 									}
 							}
@@ -246,16 +231,16 @@
 							{
 								if(theta1<maxi&&theta1>mini)
 								{
+									
 									p1 = new Point(
 								 	(body.roc * cos(theta1) + body.center.x),
 								 	(body.roc * sin(theta1) + body.center.y)
 								 	);
 								 	//console.log('p1');
 								 	p1.draw();
-								 	if (p1.x == this.start.x && p1.y == this.start.y)
-										return this.extend(p1.x,p1.y,0);
-								 	else
-								 		return this.extend(p1.x,p1.y,1,body);
+								 	if (abs(p1.x - this.start.x)>1 || abs(p1.y - this.start.y)>1){
+								 		return this.reflect(p1.x,p1.y,body);
+								 	}
 								 	
 								 	
 								}
@@ -268,10 +253,9 @@
 								 	);
 								 	//console.log('p2');
 								 	p2.draw();
-								 	if (p2.x == this.start.x && p2.y == this.start.y)
-										return this.extend(p2.x,p2.y,0);
-								 	else
-								 		return this.extend(p2.x,p2.y,1,body);
+								 	if (abs(p2.x - this.start.x)>1 || abs(p2.y - this.start.y)>1){
+								 		return this.reflect(p2.x,p2.y,body);
+								 	}
 								 	
 								}
 							}
@@ -333,19 +317,14 @@
 						let body;
 						for(j=0; j<bodiesList.length; j++){
 							reflectedLine = currLine.checkIntersect(bodiesList[j]);
-							if(reflectedLine !== undefined){
-								body = bodiesList[j];
-								break;}//Found our intersection
+							if(reflectedLine !== undefined)
+								break;//Found our intersection
 						}
-						//console.log(reflectedLine);
+						
 						if(reflectedLine === undefined){
-							//console.log(currLine.next);
-							//console.log('in curr extend');
-							currLine.extend(currLine.next.x,currLine.next.y,0);
-							//continue;
+							currLine.extend(currLine.next.x,currLine.next.y);
 						}
 						else{
-							//console.log('in line push');
 							//WE found an intersection point, so we must add a new line to the list
 							//and shorten the current line till the intersection point
 							//this.lineList[i].extend(reflectedLine.start.x, reflectedLine.start.y, 1, body);
