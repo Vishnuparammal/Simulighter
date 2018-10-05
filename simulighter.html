@@ -63,6 +63,14 @@
 				return angle;
 			}
 
+			let inBetween = function(x,constrain1,constrain2)
+			{
+				if(x<max(constrain1,constrain2)&&x>min(constrain1,constrain2))
+					return true;
+				else
+					return false;
+			}
+
 			let swap = function(a,b){
 				let swapTemp = a;
 				a = b;
@@ -222,9 +230,12 @@
 							// condition for line intersection
 							if(a1/a2 != b1/b2){
 								let p1 = new Point((c1*b2 - b1*c2)/(a1*b2-b1*a2),(a1*c2-c1*a2)/(a1*b2-b1*a2));
-								if(p1.x < max(body.plainStart.x,body.plainNext.x)&&p1.x > min(body.plainStart.x,body.plainNext.x)
-									&&p1.y < max(body.plainStart.y,body.plainNext.y)&&p1.y > min(body.plainStart.y,body.plainNext.y)
-									&& (abs(p1.x - this.start.x)>1 || abs(p1.y - this.start.y)>1)) {	//buffer check if start and int is same
+								if(	inBetween(p1.x,body.plainStart.x, body.plainNext.x)&&
+									inBetween(p1.y,body.plainStart.y, body.plainNext.y)&&	// constrain for segment intersection
+									(abs(p1.x - this.start.x)>1 || abs(p1.y - this.start.y)>1)&& //check if start and intersection is same
+									abs(inclination(this.start,this.next)-inclination(this.start,p1))<1 // if ray is pointed opposite
+									)	 
+								{	
 											return this.reflect(p1,body);	 
 								}
 							}
