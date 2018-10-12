@@ -6,6 +6,7 @@
 * Features:
 	* laser source
 	* curved mirror
+	* plain mirror
 	* convex lens
 	* grid
 	* undo
