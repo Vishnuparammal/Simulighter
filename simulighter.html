@@ -63,9 +63,22 @@
 				return angle;
 			}
 
+			let distance = function(fixed,rotate)
+			{
+				return sqrt((rotate.x - fixed.x)**2 + (rotate.y - fixed.y)**2)
+			}
+
 			let inBetween = function(x,constrain1,constrain2)
 			{
 				if(x<max(constrain1,constrain2)&&x>min(constrain1,constrain2))
+					return true;
+				else
+					return false;
+			}
+
+			let inBetweenEdge = function(x,constrain1,constrain2)
+			{
+				if(x>max(constrain1,constrain2)||x<min(constrain1,constrain2))
 					return true;
 				else
 					return false;
@@ -89,6 +102,9 @@
 			}
 
 			let Point = function(x,y){
+				if(typeof Point.prototype.type === "undefined")
+				Point.prototype.type = "Point";
+
 				this.x = x;
 				this.y = y;
 
@@ -99,7 +115,6 @@
 						stroke(255,0,0);
 						strokeWeight(10);
 						point(this.x, this.y);
-						console.log(this.x+" "+this.y);
 						pop();
 					};
 				}
@@ -113,6 +128,13 @@
 			this.start = p1;
 			this.next  = p2;
 
+			if(typeof this.distanceFromLine !== 'function'){
+				Line.prototype.distanceFromLine = function(fixed){
+					return abs(((this.start.y - this.next.y)*(fixed.x - this.start.x) - (this.start.x - this.next.x)*(fixed.y - this.start.y))
+						/sqrt((this.start.y-this.next.y)**2 + (this.start.x-this.next.x)**2));
+				}
+			}
+
 			if(typeof this.getSlope !== 'function'){
 				Line.prototype.getSlope = function(){
 					return (this.start.y - this.next.y)/(this.start.x - this.next.x);
@@ -121,111 +143,61 @@
 
 			if(typeof this.checkIntersect !== 'function'){
 				Line.prototype.checkIntersect = function(body){
+					// equation of line a1 x + b1 y = c
+					
+
 					switch(body.type){
 						case "Mirror":
+							// mirror intersection
+							// using equation in slope line form  y - y' = m*(x - x')
+							// x = r*cos angle + body.center.x  y = r*sin angle + body.center.y;
 							let lineSlope = this.getSlope();
-							let distance = abs((lineSlope*body.center.x-body.center.y-lineSlope*this.start.x+this.start.y)/(sqrt(1 + lineSlope ** 2)));
-							if (distance>=body.roc)
+							if (this.distanceFromLine(body.center)>=body.roc)
 								break;
-							
 							let eqConst = (this.start.y - body.center.y + lineSlope*(body.center.x - this.start.x))/body.roc;
 							let alpha   = acos(-lineSlope/(sqrt(1 + lineSlope ** 2)));
 							let beta = acos(eqConst/(sqrt(1 + lineSlope ** 2)));
-							let theta1 = scaleAngle(alpha - beta);
-							let theta2 = alpha + beta;
-							let mini = scaleAngle(body.angle+body.tempangle);
-							let maxi = scaleAngle(-body.angle+body.tempangle);
-							
-							let p1,p2;
+							let theta = [scaleAngle(alpha - beta),scaleAngle(alpha + beta)];
+							let mini = scaleAngle(min(body.angle,2*PI - body.angle)+body.tempangle);
+							let maxi = scaleAngle(max(body.angle,2*PI - body.angle)+body.tempangle);
+							let pointArray = new Array();
+							let p,p1,p2;
 
-							if (mini>maxi)
-							{
-								
-								if((theta1>mini&&theta1<2*PI)||(theta1>0&&theta1<maxi))
-									{
-										p1 = new Point(
-									 	(body.roc * cos(theta1) + body.center.x),
-									 	(body.roc * sin(theta1) + body.center.y)
-									 	);
-									 	//console.log('p1');
-									 	let p = new Point(p1.x+2,p1.y+2);
-								p.draw();
-									 	p1.draw();
-									 	if (abs(p1.x - this.start.x)>1 || abs(p1.y == this.start.y)>1){	//buffer check if start and int is same
-											return this.reflect(p1,body);
-										}
-									 	
-									 	
+							for (var i = 0; i < 2; i++) {
+
+								if (((mini<maxi)&&inBetweenEdge(theta[i],mini,maxi))||((mini>maxi)&&inBetween(theta[i],mini,maxi)))
+								{	// constrain for arc intersection
+									p = new Point(
+								 	(body.roc * cos(theta[i]) + body.center.x),
+								 	(body.roc * sin(theta[i]) + body.center.y)
+								 	);
+								 	
+								 	if ((abs(p.x - this.start.x)>1 || abs(p.y - this.start.y)>1) &&
+								 		abs(inclination(this.start,this.next)-inclination(this.start,p))<1) // if ray is pointed opposite)
+								 	{	//check if start and intersection is same
+										p.draw();
+										pointArray.push(p);
 									}
-							
-								if((theta2>mini&&theta2<2*PI)||(theta2>0&&theta2<maxi))
-									{
-										p2 = new Point(
-									 	(body.roc * cos(theta2) + body.center.x),
-									 	(body.roc * sin(theta2) + body.center.y)
-									 	);
-									 	//console.log('p2');
-									 	let p = new Point(p2.x+2,p2.y+2);
-								p.draw();
-									 	p2.draw();
-									 	if (abs(p2.x - this.start.x)>1 || abs(p2.y - this.start.y)>1){
-									 		return this.reflect(p2,body);
-									 	}
-									 	
-									}
+								}
 							}
-						
+							//
+							if (pointArray.length==2){
+								if(distance(this.start,p2 = pointArray.pop())>distance(this.start,p1 = pointArray.pop()))
+									return this.reflect(p1,body);
+								else
+									return this.reflect(p2,body);
+							}
+							else if (pointArray.length == 1)
+								return this.reflect(pointArray.pop(),body);
 							else
-							{
-								if(theta1<maxi&&theta1>mini)
-								{
-									
-									p1 = new Point(
-								 	(body.roc * cos(theta1) + body.center.x),
-								 	(body.roc * sin(theta1) + body.center.y)
-								 	);
-								 	
-								 	let p = new Point(p1.x+2,p1.y+2);
-								p.draw();
-								 	p1.draw();
-								 	if (abs(p1.x - this.start.x)>1 || abs(p1.y - this.start.y)>1){
-								 		return this.reflect(p1,body);
-								 	}
-								 	
-								 	
-								}
-								
-								if(theta2<maxi&&theta2>mini)
-								{
-									p2 = new Point(
-								 	(body.roc * cos(theta2) + body.center.x),
-								 	(body.roc * sin(theta2) + body.center.y)
-								 	);
-								 	let p = new Point(p2.x+2,p2.y+2);
-								p.draw();
-								 	p2.draw();
-								 	if (abs(p2.x - this.start.x)>1 || abs(p2.y - this.start.y)>1){
-								 		return this.reflect(p2,body);
-								 	}
-								 	
-								}
-							}
-
-							// var firstIntersection = sqrt((p1.x - this.start.x)**2 + (p1.y - this.start.y)**2); 
-							// var secondIntersection = sqrt((p2.x - this.start.x)**2 + (p2.y - this.start.y)**2);
-							// if (firstIntersection<=secondIntersection)
-							// 	return this.extend(p1.x,p1.y,1,body);
-							// else
-							// 	return this.extend(p2.x,p2.y,1,body); 
-							//return undefined;
+							;					
 							break;
 						
-						case "Plain":
+						case "Plain":{
 							// plain intersect
 							let a1=this.start.y-this.next.y,b1=-(this.start.x-this.next.x),
 							c1=this.start.x*(this.start.y-this.next.y)-this.start.y*(this.start.x-this.next.x);
-
-							let a2=body.plainStart.y-body.plainNext.y,b2=-(body.plainStart.x-body.plainNext.x),
+							a2=body.plainStart.y-body.plainNext.y,b2=-(body.plainStart.x-body.plainNext.x),
 							c2=body.plainStart.x*(body.plainStart.y-body.plainNext.y)-body.plainStart.y*(body.plainStart.x-body.plainNext.x);
 							// condition for line intersection
 							if(a1/a2 != b1/b2){
@@ -239,6 +211,7 @@
 											return this.reflect(p1,body);	 
 								}
 							}
+						}
 							break;
 
 						case "Lens":
@@ -274,8 +247,8 @@
 
 							lineAngle = 2*(normalInclination - lineInclination);
 							
-							let new1Line1 = new Line(this.next, transformRotate(this.next,this.start,lineAngle));
-							return new1Line1;
+							let newLine = new Line(this.next, transformRotate(this.next,this.start,lineAngle));
+							return newLine;
 						}
 							break;
 					}
@@ -408,6 +381,7 @@
 		}
 
 		let Mirror = function(p1,p2,p3,roc){
+			//MIRROR
 			if(typeof Mirror.prototype.type === "undefined")
 				Mirror.prototype.type = "Mirror";
 			this.roc = roc;
@@ -415,14 +389,15 @@
 			this.start=p2;
 			this.end = p3;
 			this.tempangle=0;
-			
 			this.center=new Point(this.pole.x-roc,this.pole.y);
-			this.angle=atan2((this.start.y-this.center.y),(this.start.x-this.center.x));
+			this.angle = inclination(this.center,this.start);
       
 			if(typeof this.setStart !=='function'){
 		      		Mirror.prototype.setStart = function(x, y){
 					this.start = new Point(x,y);
-					this.angle=atan2((this.start.y-this.center.y),(this.start.x-this.center.x));
+					this.angle = inclination(this.center,this.start);
+					if(this.angle<PI)	// setting the top point as angle reference
+						this.angle = 2*PI - this.angle; 
 					
         			}
       			}
@@ -430,19 +405,22 @@
 			if(typeof this.setEnd !=='function'){
 		      		Mirror.prototype.setEnd = function(x, y){
 					this.end = new Point(x,y);
-					this.tempangle = atan2((this.end.y-this.pole.y),(this.end.x-this.pole.x));
+					this.tempangle = inclination(this.pole,this.end);	// rotating the lens
 					this.center.x=this.roc*cos(this.tempangle) +this.pole.x;			
 					this.center.y=(this.roc*sin(this.tempangle) + this.pole.y);
-					this.tempangle +=PI;
+					this.tempangle = scaleAngle(this.tempangle + PI); // adjusting tempangle as mirror is drawn opposite to center
 					
         			}
      			}
 			
 			if(typeof this.draw !=='function'){
+				// mirror draw
 				Mirror.prototype.draw = function(){
 					push();
 		  			noFill();
-		  			arc(this.center.x,this.center.y,this.roc*2,this.roc*2,this.angle+this.tempangle,-this.angle+this.tempangle);
+		  			arc(this.center.x,this.center.y,this.roc*2,this.roc*2,
+		  				max(this.angle,2*PI - this.angle)+this.tempangle,
+		  				min(this.angle,2*PI - this.angle)+this.tempangle);
 		  			pop();
 		  			this.pole.draw();
 		  			this.center.draw();
