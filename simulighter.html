@@ -183,12 +183,12 @@
 							//
 							if (pointArray.length==2){
 								if(distance(this.start,p2 = pointArray.pop())>distance(this.start,p1 = pointArray.pop()))
-									return this.reflect(p1,body);
+									return p1;
 								else
-									return this.reflect(p2,body);
+									return p2;
 							}
 							else if (pointArray.length == 1)
-								return this.reflect(pointArray.pop(),body);
+								return pointArray.pop();
 							else
 							;					
 							break;
@@ -208,7 +208,7 @@
 									abs(inclination(this.start,this.next)-inclination(this.start,p1))<1 // if ray is pointed opposite
 									)	 
 								{	
-											return this.reflect(p1,body);	 
+											return p1;	 
 								}
 							}
 						}
@@ -326,22 +326,33 @@
 						//Gets the latest line
 						let currLine = this.lineList[i];
 						
-						let reflectedLine = undefined;
+						let nearObj = undefined;
+						let prevObj = undefined;
 						let body;
 						for(j=0; j<bodiesList.length; j++){
-							reflectedLine = currLine.checkIntersect(bodiesList[j]);
-							if(reflectedLine !== undefined)
-								break;//Found our intersection
+							nearObj = currLine.checkIntersect(bodiesList[j]);
+							if(nearObj !== undefined)
+							{
+								if(prevObj === undefined){
+									prevObj = nearObj;
+									body = bodiesList[j];
+								}
+								else if(distance(currLine.start,nearObj) < distance(currLine.start,prevObj)){
+									prevObj = nearObj;
+									body = bodiesList[j];
+								}
+								//break;//Found our intersection
+							}
 						}
 						
-						if(reflectedLine === undefined){
+						if(prevObj === undefined){
 							currLine.extend(currLine.next.x,currLine.next.y);
 						}
 						else{
 							//WE found an intersection point, so we must add a new line to the list
 							//and shorten the current line till the intersection point
 							//this.lineList[i].extend(reflectedLine.start.x, reflectedLine.start.y, 1, body);
-							this.lineList.push(reflectedLine);
+							this.lineList.push(currLine.reflect(prevObj,body));
 						}
 					}
 					
