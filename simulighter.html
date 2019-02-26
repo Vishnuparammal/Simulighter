@@ -38,10 +38,12 @@
 	<div style="padding: 0;">
 		<ul style="list-style-type: none;" class="toolbar">
 			<li><button id="ray-btn">Ray</button></li>
-			<li><button id="lens-btn">Lens</button></li>
-			<li><button id="mirror-btn">Curved Mirror</button></li>
 			<li><button id="plain-btn">Plain Mirror</button></li>
+			<li><button id="mirror-btn">Curved Mirror</button></li>
+			<li><button id="medium-btn">Medium</button></li>
+			<li><button id="lens-btn">Lens</button></li>
 			<li><button id="point-btn">Point</button></li>
+
 
 		</ul>
 	</div>
@@ -99,6 +101,36 @@
 				var ny = (rotate.x-fixed.x)*sin(angle) + (rotate.y-fixed.y)*cos(angle) + fixed.y;
 				let rotatedPoint = new Point(nx,ny);
 				return rotatedPoint;
+			}
+
+			let findX = function(fixed,rotate,y){
+				return ((y-fixed.y)/(rotate.y-fixed.y)*(rotate.x-fixed.x)+fixed.x);				
+			}
+
+			let findY = function(fixed,rotate,x){
+				return ((x-fixed.x)/(rotate.x-fixed.x)*(rotate.y-fixed.y)+fixed.y);				
+			}
+
+			let extend = function(fixed,rotate){	// extends 'rotate' away from 'fixed' and returns an end point
+				endPoint = new Point();
+				var end;
+				if(rotate.y==fixed.y){
+					if(rotate.x>fixed.x)
+						end=windowWidth;
+					else if(rotate.x<fixed.x)
+						end=0;
+					endPoint.x=end;
+					endPoint.y = rotate.y;
+				}
+				else{
+					if(rotate.y>fixed.y)
+						end=windowHeight;
+					else if (rotate.y<fixed.y)
+						end=0;
+					endPoint.x=findX(fixed,rotate,end);
+					endPoint.y=end;
+				}
+				return endPoint;
 			}
 
 			let Point = function(x,y){
@@ -256,30 +288,8 @@
 			}
 
 			if(typeof this.extend !== 'function'){
-				Line.prototype.extend = function(x,y){				
-						this.next= new Point(x,y);
-						if(this.next.y==this.start.y)
-							extend=1;
-						else
-							extend=2;
-					
-						switch(extend){
-							case 1:
-								if(this.next.x>this.start.x)
-									extend=windowWidth;
-								else if(this.next.x<this.start.x)
-									extend=0;
-								this.next.x=extend;
-								break;
-							case 2:
-								if(this.next.y>this.start.y)
-									extend=windowHeight;
-								else if (this.next.y<this.start.y)
-									extend=0;
-								this.next.x=(extend-this.start.y)/(this.next.y-this.start.y)*(this.next.x-this.start.x)+this.start.x;
-								this.next.y=extend;
-								break;
-						}
+				Line.prototype.extend = function(){				
+						this.next = extend(this.start,this.next);
 					}
 				}
 			
@@ -292,11 +302,12 @@
 		};
 		
 		let Ray = function(p1, p2){
+			// RAY
 			if(typeof Ray.prototype.type === "undefined")
 				Ray.prototype.type = "Ray";
 
-			this.start = p1; 	//START POINT OF RAY
-			this.next  = p2;	//NEXT POINT OF RAY, NOT NECESSARILY ON ANY LINE
+			this.start = p1; 	//start of ray
+			this.next  = p2;	//next point of ray, NOT NECESSARILY ON ANY LINE
 			this.lineList   = [new Line(this.start,this.next)];//todo EMPTY THIS AND FILL IN lines IN IT EVERY TIME
 
 			if(typeof this.draw !== 'function')
@@ -304,7 +315,7 @@
 					this.lineList.forEach(function(Line){
 						Line.draw();
 					});
-					this.lineList = []; //todo EMPTIES THE LIST OF LINES IN THE RAY, SO NEXT ROUND PF CALCULATIONS CAN TAKE PLACE
+					this.lineList = []; //todo empty list of line in ray, so next round of calculation can take place 
 				}
 
 			if(typeof this.emptyList !== 'function'){
@@ -313,7 +324,7 @@
 				}
 			}
 			
-			//todo RAY INTERSECTION CHECKING, ideally should work but please go through the logic as this 
+			//todo ray intersection checking, ideally should work but please go through the logic as this 
 			//is the most crucial part
 			if(typeof this.checkIntersect !== 'function'){
 				Ray.prototype.checkIntersect = function(bodiesList){
@@ -346,7 +357,7 @@
 						}
 						
 						if(prevObj === undefined){
-							currLine.extend(currLine.next.x,currLine.next.y);
+							currLine.extend();
 						}
 						else{
 							//WE found an intersection point, so we must add a new line to the list
@@ -356,21 +367,20 @@
 						}
 					}
 					
-					this.lineList.forEach(function(line){
-						line.draw();
-					});
+					// this.lineList.forEach(function(line){
+					// 	line.draw();
+					// });
 				}
 			}
 		};
 
 		let Plain = function(p1,p2){
+			// PLAIN
 			if(typeof Plain.prototype.type === "undefined")
 				Plain.prototype.type = "Plain";
 
 			this.plainStart = p1;
 			this.plainNext = p2;
-
-			// plain next
 			
 			if(typeof this.setPlainNext!== 'function'){
 				Plain.prototype.setPlainNext = function(x){
@@ -387,6 +397,38 @@
 			if(typeof this.draw !== 'function'){
 				Plain.prototype.draw = function(){
 					line(this.plainStart.x, this.plainStart.y, this.plainNext.x, this.plainNext.y);
+				};
+			}
+		}
+
+		let Medium = function(p1,p2){
+			// MEDIUM
+			if(typeof Medium.prototype.type === "undefined")
+				Medium.prototype.type = "Medium";
+
+			this.mediumStart = p1;
+			this.mediumNext = p2;
+			this.mediumExtreme1 = p1;
+			this.mediumExtreme2 = p2;
+
+			if(typeof this.setMediumNext!== 'function'){
+				Medium.prototype.setMediumNext = function(x){
+					this.mediumNext = x;
+					this.mediumExtreme2 = extend(this.mediumStart,x);
+					this.mediumExtreme1 = extend(x,this.mediumStart);
+				}
+			}
+
+			if(typeof this.draw !== 'function'){
+				Medium.prototype.draw = function(){
+					line(this.mediumExtreme1.x, this.mediumExtreme1.y, this.mediumExtreme2.x, this.mediumExtreme2.y);
+					push();
+					noStroke();
+					fill(255,50);
+					arc(this.mediumStart.x,this.mediumStart.y,2*sqrt(windowHeight**2+windowWidth**2),2*sqrt(windowHeight**2+windowWidth**2),atan2(this.mediumNext.y-this.mediumStart.y,this.mediumNext.x-this.mediumStart.x),atan2(this.mediumNext.y-this.mediumStart.y,this.mediumNext.x-this.mediumStart.x)+PI);
+					pop();
+					console.log(sqrt(windowHeight**2+windowWidth**2));
+					this.mediumStart.draw();
 				};
 			}
 		}
@@ -549,6 +591,7 @@
 							state = {}
 							break;
 					}
+				break;
 
 				case 'ray-btn':
 					switch(state.step){
@@ -623,6 +666,22 @@
 							state = {};
 							break;
       				}
+      			break;
+      			case 'medium-btn':
+      				switch(state.step){
+      					case 0:
+							let newMedium = new Medium(new Point(mouseX, mouseY), new Point(mouseX, mouseY));
+							bodyList.push(newMedium);
+							state.step = 1;
+							break;
+						case 1:
+							let new2Medium  = bodyList.pop();
+							new2Medium.setMediumNext(new Point(mouseX,mouseY));
+							bodyList.push(new2Medium);
+							state = {};
+							break;
+      				}
+      			break;
 			}
 		}
 
@@ -674,10 +733,20 @@
 					switch(state.step){
 						case 1:
 							let newPlain  = bodyList.pop();
-							newPlain.plainNext = new Point(mouseX,mouseY)
+							newPlain.plainNext = new Point(mouseX,mouseY);
 							bodyList.push(newPlain);
 							break;
 				}
+				break;
+				case 'medium-btn':
+					switch(state.step){
+						case 1:
+							let newMedium  = bodyList.pop();
+							newMedium.setMediumNext(new Point(mouseX,mouseY));
+							bodyList.push(newMedium);
+							break;
+				}
+				break;
 			}
 		}
 		function drawGrid(){      
@@ -709,6 +778,7 @@
 			bodyList.forEach(function(body){
 				body.draw();
 			});
+			
 		}
 		
 	</script>
